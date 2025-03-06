@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+
+.landingpage {
+  background-image: url("/employee.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size:auto
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
