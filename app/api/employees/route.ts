@@ -4,13 +4,15 @@ import Employee from '@/models/employee';
 import { connectDB } from '@/lib/mongodb';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'; // Make sure this path is correct
+import { authOptions } from '@/lib/auth';
 
-// ✅ CREATE EMPLOYEE
+
+
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
     const session = await getServerSession(authOptions);
+ 
 
     if (!session || !session.user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -32,7 +34,7 @@ export async function POST(request: NextRequest) {
       email,
       phone,
       role,
-      createdBy: session.user.id, 
+      createdBy: (session?.user as { id: string }).id
     });
 
     await newEmployee.save();
@@ -55,7 +57,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const employees = await Employee.find({ createdBy: session.user.id });
+    const employees = await Employee.find({ createdBy: (session?.user as { id: string }).id });
 
     return NextResponse.json({ employees }, { status: 200 });
   } catch (error: any) {
@@ -78,7 +80,7 @@ export async function PUT(request: NextRequest) {
     if (!employee) {
       return NextResponse.json({ message: "Employee not found" }, { status: 404 });
     }
-    if (employee.createdBy.toString() !== session.user.id) {
+    if (employee.createdBy.toString() !== (session?.user as { id: string }).id) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
@@ -108,7 +110,7 @@ export async function DELETE(request: NextRequest) {
     if (!employee) {
       return NextResponse.json({ message: "Employee not found" }, { status: 404 });
     }
-    if (employee.createdBy.toString() !== session.user.id) {
+    if (employee.createdBy.toString() !== (session?.user as { id: string }).id) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 

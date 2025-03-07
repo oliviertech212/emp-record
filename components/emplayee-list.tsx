@@ -26,12 +26,12 @@ export default function EmployeeDashboard() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchRole, setSearchRole] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
+  
+  console.log("data", session);
   
 
-  console.log("data",session);
-  
-  
-  // Modal state
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [formData, setFormData] = useState({
@@ -46,25 +46,23 @@ export default function EmployeeDashboard() {
   useEffect(() => {
     fetchEmployees();
   }, []);
-
   const filteredEmployees = employees.filter(
     employee => 
-      employee.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.email.toLowerCase().includes(searchTerm.toLowerCase())
+      (employee.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       employee.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       employee.email.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (selectedRole === '' || employee.role === selectedRole)
   );
 
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-    
-        setLoading(true);
-        const response = await axios.get('/api/employees', {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          withCredentials: true 
-        });
+      const response = await axios.get('/api/employees', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true 
+      });
       setEmployees(response.data.employees);
       setTotalPages(Math.ceil(response.data.employees.length / 10) || 1);
     } catch (err) {
@@ -75,11 +73,10 @@ export default function EmployeeDashboard() {
     }
   };
 
-  const handlecloseError=()=>{
+  const handlecloseError = () => {
     console.log("error close", error);
     setError('');
   }
-
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -88,7 +85,6 @@ export default function EmployeeDashboard() {
       [name]: value
     });
   };
-
  
   const createEmployee = async () => {
     try {
@@ -141,6 +137,7 @@ export default function EmployeeDashboard() {
       setError(err.response?.data?.message || 'Failed to delete employee');
     }
   };
+
   const openCreateModal = () => {
     setModalMode('create');
     resetForm();
@@ -192,6 +189,22 @@ export default function EmployeeDashboard() {
     setSearchTerm(e.target.value);
   };
 
+  const handleFilterByRole = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSearchRole(e.target.value);
+  }
+
+  const applyRoleFilter = () => {
+    setSelectedRole(searchRole);
+    setCurrentPage(1);
+  };
+
+  const resetFilters = () => {
+    setSearchRole('');
+    setSelectedRole('');
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
+
   const goToNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
@@ -203,6 +216,14 @@ export default function EmployeeDashboard() {
       setCurrentPage(currentPage - 1);
     }
   };
+
+
+  useEffect(() => {
+    setTotalPages(Math.ceil(filteredEmployees.length / 10) || 1);
+    if (currentPage > Math.ceil(filteredEmployees.length / 10) && filteredEmployees.length > 0) {
+      setCurrentPage(1);
+    }
+  }, [filteredEmployees, currentPage]);
 
   const indexOfLastEmployee = currentPage * 10;
   const indexOfFirstEmployee = indexOfLastEmployee - 10;
@@ -233,10 +254,8 @@ export default function EmployeeDashboard() {
           {error && (
             <div className="bg-red-100 border flex justify-between border-red-400 text-red-700 px-4 py-3 rounded mb-4">
               {error}
-              <button className='text-red-700 ' onClick={
-                 handlecloseError
-              }>
-                X
+              <button className='text-red-700' onClick={handlecloseError}>
+                <FiX />
               </button>
             </div>
           )}
@@ -244,14 +263,33 @@ export default function EmployeeDashboard() {
           <div className="flex justify-between mb-4">
             <div className="flex items-center">
               <div className="relative mr-4">
-                <select className="appearance-none border border-gray-300 rounded-md py-2 pl-3 pr-8 text-sm bg-white">
-                  <option>Change role</option>
-                  <option>Admin</option>
-                  <option>Staff</option>
+                <select 
+                  className="appearance-none border text-black border-gray-300 rounded-md py-2 pl-3 pr-8 text-sm bg-white"
+                  onChange={handleFilterByRole}
+                  value={searchRole}
+                >
+                  <option value="">All Roles</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Staff">Staff</option>
                 </select>
                 <FiChevronLeft className="absolute right-2 top-1/2 transform -translate-y-1/2 rotate-90" />
               </div>
-              <button className="bg-green-500 text-white px-4 py-2 rounded-md text-sm">Change</button>
+              <div className="flex space-x-2">
+                <button 
+                  className="bg-green-500 text-white px-4 py-2 rounded-md text-sm"
+                  onClick={applyRoleFilter}
+                >
+                  Change
+                </button>
+                {(selectedRole !== '' || searchTerm !== '') && (
+                  <button 
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm"
+                    onClick={resetFilters}
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
             </div>
             <div className="relative">
               <input
@@ -382,7 +420,7 @@ export default function EmployeeDashboard() {
    
       {showModal && (
         <div className="fixed inset-0  flex items-center justify-center z-50">
-          <div className="bg-white text-black rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white shadow-2xl border text-black rounded-lg p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-semibold">
                 {modalMode === 'create' ? 'Add New Employee' : 'Edit Employee'}
