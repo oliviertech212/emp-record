@@ -10,7 +10,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -22,13 +22,13 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background:  #ededed;
     --foreground: #ededed;
   }
 }
 
 body {
-  background: var(--background);
+  background:  #ededed;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }

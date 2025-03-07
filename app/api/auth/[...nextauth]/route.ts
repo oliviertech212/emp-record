@@ -3,7 +3,6 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import User from "@/models/user";
 import { connectDB } from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
-
 export const authOptions = {
   providers: [
     CredentialsProvider({
@@ -12,8 +11,8 @@ export const authOptions = {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        console.log("credentials?.email ", credentials);
+      async authorize(credentials:any) {
+        console.log("credentials ", credentials);
         await connectDB();
    
         
